@@ -5,12 +5,10 @@ import "cryptoserver/domain"
 type UserRepository interface{
 	GetByUsername(username string) (*domain.User, error)
 	Create(user *domain.User) error
-    Update(user *domain.User) error
-    Delete(id int) error
 }
 
 type CryptoRepository interface {
-    GetAll() []*domain.Crypto
+    GetAll() ([]*domain.Crypto, error)
     GetBySymbol(symbol string) (*domain.Crypto, error)
     Create(crypto *domain.Crypto) error
     Update(crypto *domain.Crypto) error

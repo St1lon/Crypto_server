@@ -4,7 +4,6 @@ import "time"
 
 // User - модель пользователя
 type User struct {
-    ID           string
     Username     string
     PasswordHash string
 }
