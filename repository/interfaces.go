@@ -13,6 +13,6 @@ type CryptoRepository interface {
     Create(crypto *domain.Crypto) error
     Update(crypto *domain.Crypto) error
     Delete(symbol string) error
-    AddPriceHistory(symbol string, record domain.PriceRecord) error
+    AddPriceHistory(symbol string, history *[]domain.PriceRecord) error
     GetPriceHistory(symbol string) ([]domain.PriceRecord, error)
 }

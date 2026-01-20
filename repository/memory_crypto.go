@@ -2,18 +2,20 @@ package repository
 
 import (
 	"cryptoserver/domain"
-	"sync"
 	"errors"
+	"sync"
 )
 
 type MemoryCryptoRepository struct{
 	cryptoList map[string]*domain.Crypto
+	historyList map[string]*[]domain.PriceRecord
 	mu sync.RWMutex
 }
 
 func NewMemoryCryptoRepository() *MemoryCryptoRepository {
     return &MemoryCryptoRepository{
         cryptoList: make(map[string]*domain.Crypto),
+		historyList: make(map[string]*[]domain.PriceRecord),
     }
 }
 
@@ -62,6 +64,39 @@ func (r* MemoryCryptoRepository)Update(crypto *domain.Crypto) error{
 	return nil
 }
 
-    Delete(symbol string) error
+func (r * MemoryCryptoRepository)Delete(symbol string) error{
+    r.mu.Lock()
+    defer r.mu.Unlock()
+	_, exist := r.cryptoList[symbol]
+	if !exist{
+		return errors.New("crypto not found")
+	}
+	delete(r.cryptoList, symbol)
+	return nil
+}
+
+func (r* MemoryCryptoRepository)AddPriceHistory(symbol string, history *[]domain.PriceRecord) error{
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	_, exist :=  r.historyList[symbol]
+	if exist{
+		return errors.New("history already exist")
+	}
+	r.historyList[symbol] = history
+	return nil
+}
+
+func (r* MemoryCryptoRepository)GetPriceHistory(symbol string)  (*[]domain.PriceRecord, error){
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	_, exist :=  r.historyList[symbol]
+	if !exist{
+		return nil, errors.New("history not found")
+	}
+	return r.historyList[symbol], nil
+}
+
+
+
 
 
