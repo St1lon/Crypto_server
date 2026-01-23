@@ -1,11 +1,15 @@
 package handler
 
 import (
-	"net/http"
 	"cryptoserver/domain"
 	"cryptoserver/repository"
 	"encoding/json"
+	"fmt"
+	"log"
+	"net/http"
+
 	"golang.org/x/crypto/bcrypt"
+
 	//"github.com/golang-jwt/jwt/v5"
 	"cryptoserver/middleware"
 )
@@ -18,19 +22,23 @@ type RegisterRequest struct {
 func HandlerRegister(userRepo repository.UserRepository) http.HandlerFunc{
 	return func(w http.ResponseWriter, r *http.Request){
 	if r.Method != "POST"{
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		http.Error(w, NewErrWrongMethod(r.Method, http.StatusMethodNotAllowed, "register user").Error(), http.StatusMethodNotAllowed)
+		log.Println("wrong method:", r.Method)
 		return
 	}
 
 	if ct := r.Header.Get("Content-Type"); ct != "application/json"{
-		http.Error(w, "Content-Type must be application/json", http.StatusUnsupportedMediaType)
+		http.Error(w, NewErrWrongCT(ct, http.StatusUnsupportedMediaType, "register user").Error(), http.StatusUnsupportedMediaType)
+		log.Println("unsupported content type:", ct)
 		return
 	}
 	var user_request RegisterRequest
-
 	decoder := json.NewDecoder(r.Body)
-	if  err := decoder.Decode(&user_request); err != nil{
-		WriteJsonError(w, "invalid JSON", http.StatusBadRequest)
+	err := decoder.Decode(&user_request);
+	if  err != nil{
+		http.Error(w, NewErrInvalidJSON(err.Error(), http.StatusBadRequest, "register user").Error(), http.StatusBadRequest)
+		wrappedErr := fmt.Errorf("failed to decode JSON body: %w", err)
+		log.Println(wrappedErr)
 		return
 	}
 	if user_request.Username == ""{
@@ -71,11 +79,11 @@ func HandlerRegister(userRepo repository.UserRepository) http.HandlerFunc{
 	}
 }
 
-func WriteJsonError(w http.ResponseWriter, message string, code int){
+func WriteJsonError(w http.ResponseWriter, err ErrCustom){
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(code)
+	w.WriteHeader(err.Code)
 	json.NewEncoder(w).Encode(map[string]string{
-		"error" : message,
+		"error" : err.Msg + "Op:" + err.Op,
 	})
 }
 
