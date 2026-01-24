@@ -2,6 +2,7 @@ package handler
 
 import (
 	"cryptoserver/domain"
+	"cryptoserver/errors"
 	"cryptoserver/repository"
 	"encoding/json"
 	"fmt"
@@ -15,79 +16,97 @@ import (
 )
 
 type RegisterRequest struct {
-    Username string `json:"username"`
-    Password string `json:"password"`  // Приходит password, не hash!
+	Username string `json:"username"`
+	Password string `json:"password"` // Приходит password, не hash!
 }
 
-func HandlerRegister(userRepo repository.UserRepository) http.HandlerFunc{
-	return func(w http.ResponseWriter, r *http.Request){
-	if r.Method != "POST"{
-		http.Error(w, NewErrWrongMethod(r.Method, http.StatusMethodNotAllowed, "register user").Error(), http.StatusMethodNotAllowed)
-		log.Println("wrong method:", r.Method)
-		return
-	}
+func HandlerRegister(userRepo repository.UserRepository) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "POST" {
+			WriteJsonError(w, errors.NewErrWrongMethod(r.Method, http.StatusMethodNotAllowed, "register user"))
+			log.Println("wrong method:", r.Method)
+			return
+		}
 
-	if ct := r.Header.Get("Content-Type"); ct != "application/json"{
-		http.Error(w, NewErrWrongCT(ct, http.StatusUnsupportedMediaType, "register user").Error(), http.StatusUnsupportedMediaType)
-		log.Println("unsupported content type:", ct)
-		return
-	}
-	var user_request RegisterRequest
-	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode(&user_request);
-	if  err != nil{
-		http.Error(w, NewErrInvalidJSON(err.Error(), http.StatusBadRequest, "register user").Error(), http.StatusBadRequest)
-		wrappedErr := fmt.Errorf("failed to decode JSON body: %w", err)
-		log.Println(wrappedErr)
-		return
-	}
-	if user_request.Username == ""{
-		WriteJsonError(w, "Username is required", http.StatusBadRequest)
-		return
-	}
-	if user_request.Password == ""{
-		WriteJsonError(w, "Password is required", http.StatusBadRequest)
-		return
-	} 
-	
-	var user domain.User
-	_, err := userRepo.GetByUsername(user_request.Username)
-	if err == nil {
-    WriteJsonError(w, "user already exists", http.StatusConflict)
-    return
-}
-	user.Username = user_request.Username
-	hash, err := bcrypt.GenerateFromPassword([]byte(user_request.Password), bcrypt.DefaultCost)
-	if err != nil{
-		WriteJsonError(w, "Fail to hasp password", http.StatusInternalServerError)
-		return
-	}
-	user.PasswordHash = string(hash)
-	err = userRepo.Create(&user)
-	if err != nil{
-		WriteJsonError(w, "Fail to create user", http.StatusConflict)
-		return
-	}
-	
-	token, err := middleware.GenerateToken(&user)
-	if err != nil{
-		WriteJsonError(w, "Error to generate JWT token", http.StatusInternalServerError)
-	}
-	WriteJsonResponse(w, map[string]interface{}{
-		"token" : token,
-	}, http.StatusCreated)
+		if ct := r.Header.Get("Content-Type"); ct != "application/json" {
+			WriteJsonError(w, errors.NewErrWrongCT(ct, http.StatusUnsupportedMediaType, "register user"))
+			log.Println("unsupported content type:", ct)
+			return
+		}
+		var user_request RegisterRequest
+		decoder := json.NewDecoder(r.Body)
+		err := decoder.Decode(&user_request)
+		if err != nil {
+			customErr := errors.NewErrInvalidJSON(err.Error(), http.StatusBadRequest, "register user")
+			WriteJsonError(w, customErr)
+			wrappedErr := fmt.Errorf("%s: %w", customErr, err)
+			log.Println(wrappedErr)
+			return
+		}
+		if user_request.Username == "" {
+			customErr := errors.NewErrUserNameRequired("username is required field", http.StatusBadRequest, "register user")
+			WriteJsonError(w, customErr)
+			log.Println(customErr)
+			return
+		}
+		if user_request.Password == "" {
+			customErr := errors.NewErrPasswordRequired("password is required field", http.StatusBadRequest, "register user")
+			WriteJsonError(w, customErr)
+			log.Println(customErr)
+			return
+		}
+
+		var user domain.User
+		_, err = userRepo.GetByUsername(user_request.Username)
+		if err == nil {
+			customErr := errors.NewErrUserAlreadyExists("user with this username already exists", http.StatusConflict, "register user")
+			WriteJsonError(w, customErr)
+			wrappedErr := fmt.Errorf("%s: %w", customErr, err)
+			log.Println(wrappedErr)
+			return
+		}
+		user.Username = user_request.Username
+		hash, err := bcrypt.GenerateFromPassword([]byte(user_request.Password), bcrypt.DefaultCost)
+		if err != nil {
+			customErr := errors.NewErrHashingPassword("fail to hash password", http.StatusInternalServerError, "register user")
+			WriteJsonError(w, customErr)
+			wrappedErr := fmt.Errorf("%s: %w", customErr, err)
+			log.Println(wrappedErr)
+			return
+		}
+		user.PasswordHash = string(hash)
+		err = userRepo.Create(&user)
+		if err != nil {
+			customErr := errors.NewErrCreateUser("fail to create user", http.StatusInternalServerError, "register user")
+			WriteJsonError(w, customErr)
+			wrappedErr := fmt.Errorf("%s: %w", customErr, err)
+			log.Println(wrappedErr)
+			return
+		}
+
+		token, err := middleware.GenerateToken(&user)
+		if err != nil {
+			customErr := errors.NewErrGenerateToken("fail to generate JWT token", http.StatusInternalServerError, "register user")
+			WriteJsonError(w, customErr)
+			wrappedErr := fmt.Errorf("%s: %w", customErr, err)
+			log.Println(wrappedErr)
+			return
+		}
+		WriteJsonResponse(w, map[string]interface{}{
+			"token": token,
+		}, http.StatusCreated)
 	}
 }
 
-func WriteJsonError(w http.ResponseWriter, err ErrCustom){
+func WriteJsonError(w http.ResponseWriter, err errors.CustomError) {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(err.Code)
+	w.WriteHeader(err.GetCode())
 	json.NewEncoder(w).Encode(map[string]string{
-		"error" : err.Msg + "Op:" + err.Op,
+		"error": err.GetMsg() + " Op:" + err.GetOp(),
 	})
 }
 
-func WriteJsonResponse(w http.ResponseWriter, message map[string]interface{}, code int){
+func WriteJsonResponse(w http.ResponseWriter, message map[string]interface{}, code int) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
 	json.NewEncoder(w).Encode(message)
