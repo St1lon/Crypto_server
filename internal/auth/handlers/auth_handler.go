@@ -1,16 +1,13 @@
-package handler
+package handlers
 
 import (
-	"cryptoserver/domain"
 	"cryptoserver/errors"
-	"cryptoserver/repository"
+	"cryptoserver/internal/repository"
+	"cryptoserver/internal/service"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
-
-	"golang.org/x/crypto/bcrypt"
-
 	//"github.com/golang-jwt/jwt/v5"
 	//"cryptoserver/middleware"
 )
@@ -44,55 +41,17 @@ func HandlerRegister(userRepo repository.UserRepository) http.HandlerFunc {
 			log.Printf("%s : %v", customErr, err)
 			return
 		}
-		if user_request.Username == "" {
-			customErr := errors.NewErrUserNameRequired("username is required field", http.StatusBadRequest, "register user")
+		authService := service.NewAuthService(userRepo)
+		token, customErr := authService.Register(user_request.Username, user_request.Password)
+		if customErr != nil {
 			WriteJsonError(w, customErr)
-			log.Println(customErr)
-			return
-		}
-		if user_request.Password == "" {
-			customErr := errors.NewErrPasswordRequired("password is required field", http.StatusBadRequest, "register user")
-			WriteJsonError(w, customErr)
-			log.Println(customErr)
-			return
-		}
-
-		var user domain.User
-		_, err = userRepo.GetByUsername(user_request.Username)
-		if err == nil {
-			customErr := errors.NewErrUserAlreadyExists("user with this username already exists", http.StatusConflict, "register user")
-			WriteJsonError(w, customErr)
-			log.Printf("user registration conflict: username '%s' already exists", user_request.Username)
-			return
-		}
-		user.Username = user_request.Username
-		hash, err := bcrypt.GenerateFromPassword([]byte(user_request.Password), bcrypt.DefaultCost)
-		if err != nil {
-			customErr := errors.NewErrHashingPassword("fail to hash password", http.StatusInternalServerError, "register user")
-			WriteJsonError(w, customErr)
-			log.Printf("%s : %v", customErr, err)
-			return
-		}
-		user.PasswordHash = string(hash)
-		err = userRepo.Create(&user)
-		if err != nil {
-			customErr := errors.NewErrCreateUser("fail to create user", http.StatusInternalServerError, "register user")
-			WriteJsonError(w, customErr)
-			log.Printf("%s : %v", customErr, err)
-			return
-		}
-
-		token, err := GenerateToken(&user)
-		if err != nil {
-			customErr := errors.NewErrGenerateToken("fail to generate JWT token", http.StatusInternalServerError, "register user")
-			WriteJsonError(w, customErr)
-			log.Printf("%s : %v", customErr, err)
+			log.Printf("%s", customErr.Error())
 			return
 		}
 		WriteJsonResponse(w, map[string]string{
 			"token": token,
 		}, http.StatusCreated)
-		log.Println("user registered:", user.Username)
+		log.Println("user registered:", user_request.Username)
 	}
 }
 
