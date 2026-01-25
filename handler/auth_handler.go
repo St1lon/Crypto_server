@@ -23,14 +23,16 @@ type RegisterRequest struct {
 func HandlerRegister(userRepo repository.UserRepository) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {
-			WriteJsonError(w, errors.NewErrWrongMethod(r.Method, http.StatusMethodNotAllowed, "register user"))
-			log.Println("wrong method:", r.Method)
+			customErr := errors.NewErrWrongMethod("wrong method: "+r.Method, http.StatusMethodNotAllowed, "register user")
+			WriteJsonError(w, customErr)
+			log.Println(customErr)
 			return
 		}
 
 		if ct := r.Header.Get("Content-Type"); ct != "application/json" {
-			WriteJsonError(w, errors.NewErrWrongCT(ct, http.StatusUnsupportedMediaType, "register user"))
-			log.Println("unsupported content type:", ct)
+			customErr := errors.NewErrWrongCT("Content-Type must be application/json", http.StatusUnsupportedMediaType, "register user")
+			WriteJsonError(w, customErr)
+			log.Println("unsupported content type:", customErr)
 			return
 		}
 		var user_request RegisterRequest
@@ -39,8 +41,7 @@ func HandlerRegister(userRepo repository.UserRepository) http.HandlerFunc {
 		if err != nil {
 			customErr := errors.NewErrInvalidJSON(err.Error(), http.StatusBadRequest, "register user")
 			WriteJsonError(w, customErr)
-			wrappedErr := fmt.Errorf("%s: %w", customErr, err)
-			log.Println(wrappedErr)
+			log.Printf("JSON decode error: %v", err)
 			return
 		}
 		if user_request.Username == "" {
@@ -61,8 +62,7 @@ func HandlerRegister(userRepo repository.UserRepository) http.HandlerFunc {
 		if err == nil {
 			customErr := errors.NewErrUserAlreadyExists("user with this username already exists", http.StatusConflict, "register user")
 			WriteJsonError(w, customErr)
-			wrappedErr := fmt.Errorf("%s: %w", customErr, err)
-			log.Println(wrappedErr)
+			log.Printf("user registration conflict: username '%s' already exists", user_request.Username)
 			return
 		}
 		user.Username = user_request.Username
@@ -70,8 +70,7 @@ func HandlerRegister(userRepo repository.UserRepository) http.HandlerFunc {
 		if err != nil {
 			customErr := errors.NewErrHashingPassword("fail to hash password", http.StatusInternalServerError, "register user")
 			WriteJsonError(w, customErr)
-			wrappedErr := fmt.Errorf("%s: %w", customErr, err)
-			log.Println(wrappedErr)
+			log.Printf("bcrypt hashing error: %v", err)
 			return
 		}
 		user.PasswordHash = string(hash)
@@ -79,8 +78,7 @@ func HandlerRegister(userRepo repository.UserRepository) http.HandlerFunc {
 		if err != nil {
 			customErr := errors.NewErrCreateUser("fail to create user", http.StatusInternalServerError, "register user")
 			WriteJsonError(w, customErr)
-			wrappedErr := fmt.Errorf("%s: %w", customErr, err)
-			log.Println(wrappedErr)
+			log.Printf("user creation error: %v", err)
 			return
 		}
 
@@ -88,13 +86,13 @@ func HandlerRegister(userRepo repository.UserRepository) http.HandlerFunc {
 		if err != nil {
 			customErr := errors.NewErrGenerateToken("fail to generate JWT token", http.StatusInternalServerError, "register user")
 			WriteJsonError(w, customErr)
-			wrappedErr := fmt.Errorf("%s: %w", customErr, err)
-			log.Println(wrappedErr)
+			log.Printf("token generation error: %v", err)
 			return
 		}
-		WriteJsonResponse(w, map[string]interface{}{
+		WriteJsonResponse(w, map[string]string{
 			"token": token,
 		}, http.StatusCreated)
+		log.Println("user registered:", user.Username)
 	}
 }
 
@@ -102,11 +100,11 @@ func WriteJsonError(w http.ResponseWriter, err errors.CustomError) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(err.GetCode())
 	json.NewEncoder(w).Encode(map[string]string{
-		"error": err.GetMsg() + " Op:" + err.GetOp(),
+		"error": err.GetMsg() + " Op:" + err.GetOp() + " Code:" + fmt.Sprintf("%d", err.GetCode()),
 	})
 }
 
-func WriteJsonResponse(w http.ResponseWriter, message map[string]interface{}, code int) {
+func WriteJsonResponse(w http.ResponseWriter, message map[string]string, code int) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
 	json.NewEncoder(w).Encode(message)

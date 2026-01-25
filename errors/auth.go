@@ -57,3 +57,36 @@ func (e ErrUserAlreadyExists) GetOp() string  { return e.Op }
 func NewErrUserAlreadyExists(msg string, code int, op string) CustomError {
 	return ErrUserAlreadyExists{Msg: msg, Code: code, Op: op}
 }
+
+
+type ErrUserNotFound struct {
+	Msg  string
+	Code int
+	Op   string
+}
+func (e ErrUserNotFound) Error() string {
+	return fmt.Sprintf("user not found: %s, fail with code %d, operation: %s", e.Msg, e.Code, e.Op)
+}
+func (e ErrUserNotFound) GetCode() int   { return e.Code }
+func (e ErrUserNotFound) GetMsg() string { return e.Msg }
+func (e ErrUserNotFound) GetOp() string  { return e.Op }
+
+func NewErrUserNotFound(msg string, code int, op string) CustomError {
+	return ErrUserNotFound{Msg: msg, Code: code, Op: op}
+}
+
+type ErrInvalidCredentials struct {
+	Msg  string
+	Code int
+	Op   string
+}
+func (e ErrInvalidCredentials) Error() string {
+	return fmt.Sprintf("invalid credentials: %s, fail with code %d, operation: %s", e.Msg, e.Code, e.Op)
+}
+func (e ErrInvalidCredentials) GetCode() int   { return e.Code }
+func (e ErrInvalidCredentials) GetMsg() string { return e.Msg }
+func (e ErrInvalidCredentials) GetOp() string  { return e.Op }
+
+func NewErrInvalidCredentials(msg string, code int, op string) CustomError {
+	return ErrInvalidCredentials{Msg: msg, Code: code, Op: op}
+}

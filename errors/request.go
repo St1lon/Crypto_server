@@ -5,21 +5,22 @@ import (
 )
 
 type ErrWrongMethod struct {
+	Msg    string
 	Code   int
-	Method string
 	Op     string
 }
 
 func (e ErrWrongMethod) Error() string {
-	return fmt.Sprintf("wrong method: %s, fail with code %d, operation: %s", e.Method, e.Code, e.Op)
+	return fmt.Sprintf("wrong method: %s, fail with code %d, operation: %s", e.Msg, e.Code, e.Op)
 }
 
 func (e ErrWrongMethod) GetCode() int   { return e.Code }
-func (e ErrWrongMethod) GetMsg() string { return e.Method }
+func (e ErrWrongMethod) GetMsg() string { return e.Msg }
 func (e ErrWrongMethod) GetOp() string  { return e.Op }
 
 func NewErrWrongMethod(method string, code int, op string) CustomError {
-	return ErrWrongMethod{Method: method, Code: code, Op: op}
+	msg := fmt.Sprintf("wrong method: %s", method)
+	return ErrWrongMethod{Code: code, Op: op, Msg: msg}
 }
 
 type ErrWrongCT struct {
