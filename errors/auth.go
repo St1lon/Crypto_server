@@ -90,3 +90,36 @@ func (e ErrInvalidCredentials) GetOp() string  { return e.Op }
 func NewErrInvalidCredentials(msg string, code int, op string) CustomError {
 	return ErrInvalidCredentials{Msg: msg, Code: code, Op: op}
 }
+
+type ErrTokenMissed struct {
+	Msg  string
+	Code int
+	Op   string
+}
+func (e ErrTokenMissed) Error() string {
+	return fmt.Sprintf("token missed: %s, fail with code %d, operation: %s", e.Msg, e.Code, e.Op)
+}
+func (e ErrTokenMissed) GetCode() int   { return e.Code }
+func (e ErrTokenMissed) GetMsg() string { return e.Msg }
+func (e ErrTokenMissed) GetOp() string  { return e.Op }
+
+func NewErrTokenMissed(msg string, code int, op string) CustomError {
+	return ErrTokenMissed{Msg: msg, Code: code, Op: op}
+}
+
+type ErrInvalidToken struct {
+	Msg  string
+	Code int
+	Op   string
+}
+
+func (e ErrInvalidToken) Error() string {
+	return fmt.Sprintf("invalid token: %s, fail with code %d, operation: %s", e.Msg, e.Code, e.Op)
+}
+func (e ErrInvalidToken) GetCode() int   { return e.Code }
+func (e ErrInvalidToken) GetMsg() string { return e.Msg }
+func (e ErrInvalidToken) GetOp() string  { return e.Op }
+
+func NewErrInvalidToken(msg string, code int, op string) CustomError {
+	return ErrInvalidToken{Msg: msg, Code: code, Op: op}
+}

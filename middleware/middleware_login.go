@@ -1,39 +1,31 @@
 package middleware
 
 import (
-	"cryptoserver/domain"
-	"time"
-
-	"github.com/golang-jwt/jwt/v5"
+	//"crypto/aes"
 	"fmt"
+	"cryptoserver/errors"
+	"log"
+	"net/http"
+	"cryptoserver/handler"
 )
-var secret_key = []byte("clmcmekkenckmekme")
 
-type CustomClaims struct {
-    Username string `json:"username"`
-    jwt.RegisteredClaims // встраивание стандартных claims
+func AuthMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		tokenString := r.Header.Get("Authorization")
+		if tokenString == "" {
+			customErr := errors.NewErrTokenMissed("Authorization token is missing", http.StatusUnauthorized, "auth middleware")
+			handler.WriteJsonError(w, customErr)
+			log.Println(customErr)
+			return
+		}
+		token, err := handler.ParseToken(tokenString)
+		if err != nil || !token.Valid {
+			customErr := errors.NewErrInvalidToken("Invalid authorization token", http.StatusUnauthorized, "auth middleware")
+			handler.WriteJsonError(w, customErr)
+			log.Println(fmt.Errorf("%s : %w", &customErr, err))
+			return
+		}
+		handler.WriteJsonResponse(w, map[string]string{"message": tokenString}, http.StatusOK)
+		next.ServeHTTP(w, r)
+	})
 }
-
-func GenerateToken(user *domain.User) (string, error){
-	claims := CustomClaims{
-    Username: user.Username,
-    RegisteredClaims: jwt.RegisteredClaims{
-        ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
-        IssuedAt:  jwt.NewNumericDate(time.Now()),
-    },
-}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(secret_key)
-}
-
-func ParseToken(tokenString string) (*jwt.Token, error) {
-    return jwt.ParseWithClaims(tokenString, &CustomClaims{}, func(token *jwt.Token) (interface{}, error) {
-        if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-            return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-        }
-        return secret_key, nil
-    })
-}
-
-func MidllewareLogging
-

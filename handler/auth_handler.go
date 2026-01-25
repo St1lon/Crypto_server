@@ -12,7 +12,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	//"github.com/golang-jwt/jwt/v5"
-	"cryptoserver/middleware"
+	//"cryptoserver/middleware"
 )
 
 type RegisterRequest struct {
@@ -41,7 +41,7 @@ func HandlerRegister(userRepo repository.UserRepository) http.HandlerFunc {
 		if err != nil {
 			customErr := errors.NewErrInvalidJSON(err.Error(), http.StatusBadRequest, "register user")
 			WriteJsonError(w, customErr)
-			log.Printf("JSON decode error: %v", err)
+			log.Printf("%s : %v", customErr, err)
 			return
 		}
 		if user_request.Username == "" {
@@ -70,7 +70,7 @@ func HandlerRegister(userRepo repository.UserRepository) http.HandlerFunc {
 		if err != nil {
 			customErr := errors.NewErrHashingPassword("fail to hash password", http.StatusInternalServerError, "register user")
 			WriteJsonError(w, customErr)
-			log.Printf("bcrypt hashing error: %v", err)
+			log.Printf("%s : %v", customErr, err)
 			return
 		}
 		user.PasswordHash = string(hash)
@@ -78,15 +78,15 @@ func HandlerRegister(userRepo repository.UserRepository) http.HandlerFunc {
 		if err != nil {
 			customErr := errors.NewErrCreateUser("fail to create user", http.StatusInternalServerError, "register user")
 			WriteJsonError(w, customErr)
-			log.Printf("user creation error: %v", err)
+			log.Printf("%s : %v", customErr, err)
 			return
 		}
 
-		token, err := middleware.GenerateToken(&user)
+		token, err := GenerateToken(&user)
 		if err != nil {
 			customErr := errors.NewErrGenerateToken("fail to generate JWT token", http.StatusInternalServerError, "register user")
 			WriteJsonError(w, customErr)
-			log.Printf("token generation error: %v", err)
+			log.Printf("%s : %v", customErr, err)
 			return
 		}
 		WriteJsonResponse(w, map[string]string{
