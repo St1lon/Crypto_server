@@ -2,11 +2,11 @@ package middleware
 
 import (
 	//"crypto/aes"
-	"fmt"
+
 	"cryptoserver/errors"
+	"cryptoserver/handler"
 	"log"
 	"net/http"
-	"cryptoserver/handler"
 )
 
 func AuthMiddleware(next http.Handler) http.Handler {
@@ -22,10 +22,14 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		if err != nil || !token.Valid {
 			customErr := errors.NewErrInvalidToken("Invalid authorization token", http.StatusUnauthorized, "auth middleware")
 			handler.WriteJsonError(w, customErr)
-			log.Println(fmt.Errorf("%s : %w", &customErr, err))
+			if err != nil {
+				log.Printf("%s: %v", customErr.Error(), err)
+			} else {
+				log.Println(customErr.Error())
+			}
 			return
 		}
-		handler.WriteJsonResponse(w, map[string]string{"message": tokenString}, http.StatusOK)
+		//handler.WriteJsonResponse(w, map[string]string{"message": tokenString}, http.StatusOK)
 		next.ServeHTTP(w, r)
 	})
 }

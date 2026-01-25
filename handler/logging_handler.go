@@ -5,15 +5,15 @@ import (
 	"cryptoserver/errors"
 	"cryptoserver/repository"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
-	"golang.org/x/crypto/bcrypt"
 
+	"golang.org/x/crypto/bcrypt"
 	//"github.com/golang-jwt/jwt/v5"
 	//"cryptoserver/middleware"
 )
-func HandlerLogging(userRepo repository.UserRepository) http.HandlerFunc {
+
+func HandlerAuth(userRepo repository.UserRepository) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {
 			customErr := errors.NewErrWrongMethod("wrong method: "+r.Method, http.StatusMethodNotAllowed, "login user")
@@ -52,21 +52,21 @@ func HandlerLogging(userRepo repository.UserRepository) http.HandlerFunc {
 		if err != nil {
 			customErr := errors.NewErrUserNotFound("user not found", http.StatusNotFound, "login user")
 			WriteJsonError(w, customErr)
-			log.Println(fmt.Errorf("%s : %w", &customErr, err))
+			log.Printf("%s: %v", customErr.Error(), err)
 			return
 		}
 		err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(user_request.Password))
 		if err != nil {
 			customErr := errors.NewErrInvalidCredentials("invalid credentials", http.StatusUnauthorized, "login user")
 			WriteJsonError(w, customErr)
-			log.Println(fmt.Errorf("%s : %w", &customErr, err))
+			log.Printf("%s: %v", customErr.Error(), err)
 			return
 		}
 		token, err := GenerateToken(user)
 		if err != nil {
 			customErr := errors.NewErrGenerateToken("failed to generate token", http.StatusInternalServerError, "login user")
 			WriteJsonError(w, customErr)
-			log.Println(fmt.Errorf("%s : %w", &customErr, err))
+			log.Printf("%s: %v", customErr.Error(), err)
 			return
 		}
 		response := map[string]string{"token": token}
