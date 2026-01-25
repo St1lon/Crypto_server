@@ -103,7 +103,6 @@ func WriteJsonError(w http.ResponseWriter, err errors.CustomError) {
 		"error": err.GetMsg() + " Op:" + err.GetOp() + " Code:" + fmt.Sprintf("%d", err.GetCode()),
 	})
 }
-
 func WriteJsonResponse(w http.ResponseWriter, message map[string]string, code int) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
