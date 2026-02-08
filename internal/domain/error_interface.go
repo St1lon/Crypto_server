@@ -1,4 +1,4 @@
-package errors
+package domain
 
 // CustomError - интерфейс для всех кастомных ошибок
 type CustomError interface {

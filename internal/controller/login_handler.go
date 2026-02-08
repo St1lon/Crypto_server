@@ -1,9 +1,7 @@
-package handlers
+package controller
 
 import (
-	//"cryptoserver/domain"
-	"cryptoserver/errors"
-	"cryptoserver/internal/repository"
+	"cryptoserver/internal/domain"
 	"cryptoserver/internal/service"
 	"encoding/json"
 	"log"
@@ -12,16 +10,16 @@ import (
 	//"cryptoserver/middleware"
 )
 
-func HandlerAuth(userRepo repository.UserRepository) http.HandlerFunc {
+func HandlerLogin(userRepo service.UserRepository) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {
-			customErr := errors.NewErrWrongMethod("wrong method: "+r.Method, http.StatusMethodNotAllowed, "login user")
+			customErr := domain.NewErrWrongMethod("wrong method: "+r.Method, http.StatusMethodNotAllowed, "login user")
 			WriteJsonError(w, customErr)
 			log.Println(customErr)
 			return
 		}
 		if ct := r.Header.Get("Content-Type"); ct != "application/json" {
-			customErr := errors.NewErrWrongCT("Content-Type must be application/json", http.StatusUnsupportedMediaType, "login user")
+			customErr := domain.NewErrWrongCT("Content-Type must be application/json", http.StatusUnsupportedMediaType, "login user")
 			WriteJsonError(w, customErr)
 			log.Println("unsupported content type:", customErr)
 			return
@@ -30,19 +28,19 @@ func HandlerAuth(userRepo repository.UserRepository) http.HandlerFunc {
 		decoder := json.NewDecoder(r.Body)
 		err := decoder.Decode(&user_request)
 		if err != nil {
-			customErr := errors.NewErrInvalidJSON(err.Error(), http.StatusBadRequest, "login user")
+			customErr := domain.NewErrInvalidJSON(err.Error(), http.StatusBadRequest, "login user")
 			WriteJsonError(w, customErr)
 			log.Printf("JSON decode error: %v", err)
 			return
 		}
 		if user_request.Username == "" {
-			customErr := errors.NewErrUserNameRequired("username is required field", http.StatusBadRequest, "login user")
+			customErr := domain.NewErrUserNameRequired("username is required field", http.StatusBadRequest, "login user")
 			WriteJsonError(w, customErr)
 			log.Println(customErr)
 			return
 		}
 		if user_request.Password == "" {
-			customErr := errors.NewErrPasswordRequired("password is required field", http.StatusBadRequest, "login user")
+			customErr := domain.NewErrPasswordRequired("password is required field", http.StatusBadRequest, "login user")
 			WriteJsonError(w, customErr)
 			log.Println(customErr)
 			return

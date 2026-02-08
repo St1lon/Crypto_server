@@ -1,6 +1,6 @@
-package repository
+package service
 
-import "cryptoserver/domain"
+import "cryptoserver/internal/domain"
 
 type UserRepository interface{
 	GetByUsername(username string) (*domain.User, error)

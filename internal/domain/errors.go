@@ -1,4 +1,4 @@
-package errors
+package domain
 
 import (
 	"fmt"
@@ -123,3 +123,114 @@ func (e ErrInvalidToken) GetOp() string  { return e.Op }
 func NewErrInvalidToken(msg string, code int, op string) CustomError {
 	return ErrInvalidToken{Msg: msg, Code: code, Op: op}
 }
+
+type ErrWrongMethod struct {
+	Msg    string
+	Code   int
+	Op     string
+}
+
+func (e ErrWrongMethod) Error() string {
+	return fmt.Sprintf("wrong method: %s, fail with code %d, operation: %s", e.Msg, e.Code, e.Op)
+}
+
+func (e ErrWrongMethod) GetCode() int   { return e.Code }
+func (e ErrWrongMethod) GetMsg() string { return e.Msg }
+func (e ErrWrongMethod) GetOp() string  { return e.Op }
+
+func NewErrWrongMethod(method string, code int, op string) CustomError {
+	msg := fmt.Sprintf("wrong method: %s", method)
+	return ErrWrongMethod{Code: code, Op: op, Msg: msg}
+}
+
+type ErrWrongCT struct {
+	Msg  string
+	Code int
+	Op   string
+}
+
+func (e ErrWrongCT) Error() string {
+	return fmt.Sprintf("wrong content type: %s, fail with code %d, operation: %s", e.Msg, e.Code, e.Op)
+}
+
+func (e ErrWrongCT) GetCode() int   { return e.Code }
+func (e ErrWrongCT) GetMsg() string { return e.Msg }
+func (e ErrWrongCT) GetOp() string  { return e.Op }
+
+func NewErrWrongCT(msg string, code int, op string) CustomError {
+	return ErrWrongCT{Msg: msg, Code: code, Op: op}
+}
+
+type ErrInvalidJSON struct {
+	Msg  string
+	Code int
+	Op   string
+}
+
+func (e ErrInvalidJSON) Error() string {
+	return fmt.Sprintf("invalid JSON: %s, fail with code %d, operation: %s", e.Msg, e.Code, e.Op)
+}
+
+func (e ErrInvalidJSON) GetCode() int   { return e.Code }
+func (e ErrInvalidJSON) GetMsg() string { return e.Msg }
+func (e ErrInvalidJSON) GetOp() string  { return e.Op }
+
+func NewErrInvalidJSON(msg string, code int, op string) CustomError {
+	return ErrInvalidJSON{Msg: msg, Code: code, Op: op}
+}
+
+
+type ErrHashingPassword struct {
+	Msg  string
+	Code int
+	Op   string
+}
+
+func (e ErrHashingPassword) Error() string {
+	return fmt.Sprintf("hashing password error: %s, fail with code %d, operation: %s", e.Msg, e.Code, e.Op)
+}
+
+func (e ErrHashingPassword) GetCode() int   { return e.Code }
+func (e ErrHashingPassword) GetMsg() string { return e.Msg }
+func (e ErrHashingPassword) GetOp() string  { return e.Op }
+
+func NewErrHashingPassword(msg string, code int, op string) CustomError {
+	return ErrHashingPassword{Msg: msg, Code: code, Op: op}
+}
+
+type ErrCreateUser struct {
+	Msg  string
+	Code int
+	Op   string
+}
+
+func (e ErrCreateUser) Error() string {
+	return fmt.Sprintf("create user error: %s, fail with code %d, operation: %s", e.Msg, e.Code, e.Op)
+}
+
+func (e ErrCreateUser) GetCode() int   { return e.Code }
+func (e ErrCreateUser) GetMsg() string { return e.Msg }
+func (e ErrCreateUser) GetOp() string  { return e.Op }
+
+func NewErrCreateUser(msg string, code int, op string) CustomError {
+	return ErrCreateUser{Msg: msg, Code: code, Op: op}
+}
+
+type ErrGenerateToken struct {
+	Msg  string
+	Code int
+	Op   string
+}
+
+func (e ErrGenerateToken) Error() string {
+	return fmt.Sprintf("generate token error: %s, fail with code %d, operation: %s", e.Msg, e.Code, e.Op)
+}
+
+func (e ErrGenerateToken) GetCode() int   { return e.Code }
+func (e ErrGenerateToken) GetMsg() string { return e.Msg }
+func (e ErrGenerateToken) GetOp() string  { return e.Op }
+
+func NewErrGenerateToken(msg string, code int, op string) CustomError {
+	return ErrGenerateToken{Msg: msg, Code: code, Op: op}
+}
+

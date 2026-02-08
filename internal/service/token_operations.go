@@ -1,7 +1,7 @@
-package auth
+package service
 
 import (
-	"cryptoserver/domain"
+	"cryptoserver/internal/domain"
 	"time"
 	"github.com/golang-jwt/jwt/v5"
 	"fmt"

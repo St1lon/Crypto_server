@@ -1,7 +1,7 @@
-package repository
+package adapter
 
 import (
-	"cryptoserver/domain"
+	"cryptoserver/internal/domain"
 	"errors"
 	"sync"
 )
