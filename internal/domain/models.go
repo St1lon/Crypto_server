@@ -22,3 +22,10 @@ type PriceRecord struct {
     Price     float64   `json:"price"`
     Timestamp time.Time `json:"timestamp"`
 }
+
+type CustomError interface {
+	error
+	GetCode() int
+	GetMsg() string
+	GetOp() string
+}
