@@ -21,6 +21,8 @@ func WriteJsonError(w http.ResponseWriter, err domain.CustomError) {
 	})
 }
 
+
+
 func WriteJsonResponse(w http.ResponseWriter, message map[string]string, code int) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
