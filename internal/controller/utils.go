@@ -12,6 +12,7 @@ type RegisterRequest struct {
 	Password string `json:"password"`
 }
 
+
 func WriteJsonError(w http.ResponseWriter, err domain.CustomError) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(err.GetCode())
